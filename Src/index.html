@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Velha - UNIFOR</title>
+    <!-- Importação do Canvas Confetti exigido no RF-06 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* 10. Requisitos Não Funcionais: Interface Institucional UNIFOR */
+        :root {
+            --unifor-azul: #003366;
+            --unifor-azul-destaque: #0056b3;
+            --unifor-laranja: #d97706;
+            --unifor-fundo: #f4f6f9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--unifor-fundo);
+            color: var(--unifor-azul);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* UI-01 e UI-02: Cabeçalhos */
+        .header-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .subtitle {
+            color: var(--unifor-azul-destaque);
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 0;
+        }
+        h1 {
+            color: var(--unifor-azul);
+            margin: 5px 0 0 0;
+            font-size: 2.5rem;
+            text-transform: uppercase;
+        }
+
+        /* UI-03 e UI-04: Controles */
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        select {
+            padding: 8px 12px;
+            border: 2px solid var(--unifor-azul-destaque);
+            border-radius: 5px;
+            font-size: 1rem;
+            color: var(--unifor-azul);
+            background: white;
+            cursor: pointer;
+        }
+
+        /* UI-05, UI-06, UI-07: Placar */
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+        .player-score {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .score-x { color: var(--unifor-azul); }
+        .score-o { color: var(--unifor-laranja); }
+        .score-value { font-size: 1.5rem; margin-top: 5px; }
+        
+        .round-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: bold;
+        }
+        .round-value {
+            font-size: 1.3rem;
+            color: var(--unifor-azul-destaque);
+            margin-top: 5px;
+        }
+
+        /* UI-08: Status do Jogo */
+        .status-message {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            min-height: 30px;
+            color: var(--unifor-azul-destaque);
+        }
+
+        /* UI-09: Tabuleiro */
+        .board-wrapper {
+            position: relative;
+            width: 320px;
+            height: 320px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 5px;
+            width: 100%;
+            height: 100%;
+            background-color: var(--unifor-azul);
+            border: 5px solid var(--unifor-azul);
+            border-radius: 10px;
+        }
+        .cell {
+            background-color: var(--unifor-fundo);
+            border: none;
+            font-size: 4rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        .cell:hover {
+            background-color: #e2e6ea;
+        }
+        .cell.x { color: var(--unifor-azul); }
+        .cell.o { color: var(--unifor-laranja); }
+
+        /* UI-10: Linha de Vitória */
+        .win-line {
+            position: absolute;
+            background-color: #28a745;
+            transform-origin: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* UI-11: Botão Reiniciar */
+        .btn-restart {
+            margin-top: 30px;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            background-color: var(--unifor-azul-destaque);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background-color 0.2s;
+        }
+        .btn-restart:hover {
+            background-color: var(--unifor-azul);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <p class="subtitle" id="ui-01">UNIVERSIDADE DE FORTALEZA</p>
+        <h1 id="ui-02">Jogo da Velha</h1>
+    </div>
+
+    <div class="controls">
+        <select id="ui-03">
+            <option value="pvp">2 Jogadores (PVP)</option>
+            <option value="cpu">Contra o Computador</option>
+        </select>
+        <select id="ui-04">
+            <option value="single">Partida Única</option>
+            <option value="bo3">Melhor de 3 (MD3)</option>
+        </select>
+    </div>
+
+    <div class="scoreboard">
+        <div class="player-score score-x">
+            <span>JOGADOR X</span>
+            <span class="score-value" id="ui-05">0</span>
+        </div>
+        <div class="round-info">
+            <span>RODADA</span>
+            <span class="round-value" id="ui-06">1/1</span>
+        </div>
+        <div class="player-score score-o">
+            <span id="label-jogador-o">JOGADOR O</span>
+            <span class="score-value" id="ui-07">0</span>
+        </div>
+    </div>
+
+    <div class="status-message" id="ui-08">Vez do Jogador X</div>
+
+    <div class="board-wrapper">
+        <div class="board" id="ui-09">
+            <!-- 9 Células renderizadas dinamicamente -->
+            <button class="cell" data-index="0"></button>
+            <button class="cell" data-index="1"></button>
+            <button class="cell" data-index="2"></button>
+            <button class="cell" data-index="3"></button>
+            <button class="cell" data-index="4"></button>
+            <button class="cell" data-index="5"></button>
+            <button class="cell" data-index="6"></button>
+            <button class="cell" data-index="7"></button>
+            <button class="cell" data-index="8"></button>
+        </div>
+        <div class="win-line" id="ui-10"></div>
+    </div>
+
+    <button class="btn-restart" id="ui-11">Reiniciar Jogo</button>
+
+    <script>
+        // 18. Dicionário de Dados e Estrutura de Estado
+        let options = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let running = false;
+        let winsX = 0;
+        let winsO = 0;
+        let currentRound = 1;
+        let modeSelect = 'pvp';
+        let formatSelect = 'single';
+
+        const winPatterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Linhas
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Colunas
+            [0, 4, 8], [2, 4, 6]             // Diagonais
+        ];
+
+        // Elementos do DOM
+        const cells = document.querySelectorAll('.cell');
+        const statusText = document.getElementById('ui-08');
+        const restartBtn = document.getElementById('ui-11');
+        const winLine = document.getElementById('ui-10');
+        const modeSelector = document.getElementById('ui-03');
+        const formatSelector = document.getElementById('ui-04');
+        const scoreXText = document.getElementById('ui-05');
+        const scoreOText = document.getElementById('ui-07');
+        const roundText = document.getElementById('ui-06');
+        const labelJogadorO = document.getElementById('label-jogador-o');
+
+        // --- RF-04: Sintetização de Áudio Web Audio API (Zero Dependências) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, type, duration, vol = 0.1) {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        function playSoundX() { playTone(440, 'sine', 0.15); } // Nota A4
+        function playSoundO() { playTone(659.25, 'sine', 0.15); } // Nota E5
+        function playSoundDraw() {
+            playTone(300, 'sawtooth', 0.5);
+            setTimeout(() => playTone(250, 'sawtooth', 0.5), 150);
+        }
+        function playSoundWin() {
+            // Acorde de vitória (C4, E4, G4, C5)
+            const delay = 100;
+            setTimeout(() => playTone(261.63, 'square', 0.2), 0);
+            setTimeout(() => playTone(329.63, 'square', 0.2), delay);
+            setTimeout(() => playTone(392.00, 'square', 0.2), delay * 2);
+            setTimeout(() => playTone(523.25, 'square', 0.4), delay * 3);
+        }
+        // ----------------------------------------------------------------------
+
+        // Inicialização do Jogo
+        function initializeGame() {
+            cells.forEach(cell => cell.addEventListener('click', cellClicked));
+            restartBtn.addEventListener('click', restartMatch);
+            modeSelector.addEventListener('change', changeMode);
+            formatSelector.addEventListener('change', changeFormat);
+            startNewRound();
+        }
+
+        function startNewRound() {
+            options = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            running = true;
+            statusText.textContent = `Vez do Jogador ${currentPlayer}`;
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell'; // Reseta classes de cor
+            });
+            winLine.style.opacity = 0; // Oculta a linha
+            updateScoreboard();
+        }
+
+        // Alteração de Parâmetros (A3)
+        function changeMode() {
+            modeSelect = modeSelector.value;
+            labelJogadorO.textContent = modeSelect === 'cpu' ? 'COMPUTADOR' : 'JOGADOR O';
+            restartMatch();
+        }
+
+        function changeFormat() {
+            formatSelect = formatSelector.value;
+            restartMatch();
+        }
+
+        function restartMatch() {
+            winsX = 0;
+            winsO = 0;
+            currentRound = 1;
+            startNewRound();
+        }
+
+        function updateScoreboard() {
+            scoreXText.textContent = winsX;
+            scoreOText.textContent = winsO;
+            if (formatSelect === 'single') {
+                roundText.textContent = '1/1';
+            } else {
+                roundText.textContent = `${Math.min(currentRound, 3)}/3`;
+            }
+        }
+
+        // Fluxo Principal (P3, P4)
+        function cellClicked() {
+            initAudio(); // Ativa contexto de áudio na primeira interação
+            const cellIndex = this.getAttribute('data-index');
+
+            if (options[cellIndex] !== '' || !running) {
+                return; // CA-02 e CA-03
+            }
+
+            updateCell(this, cellIndex);
+            checkWinner();
+
+            // A2. Jogada do Computador (Modo CPU)
+            if (running && modeSelect === 'cpu' && currentPlayer === 'O') {
+                running = false; // A2.2 Bloqueia cliques temporariamente
+                statusText.textContent = "Computador pensando...";
+                setTimeout(() => {
+                    executeCPUMove();
+                }, 400); // A2.3 Intervalo de reflexão
+            }
+        }
+
+        function updateCell(cell, index) {
+            options[index] = currentPlayer;
+            cell.textContent = currentPlayer;
+            cell.classList.add(currentPlayer.toLowerCase());
+            
+            // P4.2 Toca Efeito Sonoro
+            if (currentPlayer === 'X') playSoundX();
+            else playSoundO();
+        }
+
+        function changePlayer() {
+            currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+            statusText.textContent = `Vez do Jogador ${currentPlayer}`;
+        }
+
+        // Inteligência da CPU (Aleatória em posições vazias)
+        function executeCPUMove() {
+            let emptyCells = [];
+            for (let i = 0; i < options.length; i++) {
+                if (options[i] === '') emptyCells.push(i);
+            }
+            
+            if (emptyCells.length > 0) {
+                const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                const cellToClick = document.querySelector(`.cell[data-index="${randomIndex}"]`);
+                
+                updateCell(cellToClick, randomIndex);
+                running = true; // Desbloqueia
+                checkWinner();
+            }
+        }
+
+        // P4.3 / A1 / E1: Checagem de Vitória e Empate
+        function checkWinner() {
+            let roundWon = false;
+            let winningCondition = null;
+
+            for (let i = 0; i < winPatterns.length; i++) {
+                const condition = winPatterns[i];
+                const cellA = options[condition[0]];
+                const cellB = options[condition[1]];
+                const cellC = options[condition[2]];
+
+                if (cellA === '' || cellB === '' || cellC === '') {
+                    continue;
+                }
+                if (cellA === cellB && cellB === cellC) {
+                    roundWon = true;
+                    winningCondition = condition;
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                handleWin(winningCondition);
+            } else if (!options.includes('')) {
+                handleDraw(); // E1. Fim de Rodada por Empate
+            } else {
+                changePlayer(); // P5. Alterna o Turno
+            }
+        }
+
+        function handleWin(winningCondition) {
+            running = false;
+            statusText.textContent = `Jogador ${currentPlayer} Venceu a Rodada!`;
+            
+            // A1.2 Desenha Linha
+            drawWinLine(winningCondition);
+            
+            // A1.3 e A1.4 Confetes e Som
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            playSoundWin();
+
+            // A1.5 Incrementa placar
+            if (currentPlayer === 'X') winsX++;
+            else winsO++;
+
+            updateScoreboard();
+            processRoundEnd();
+        }
+
+        function handleDraw() {
+            running = false;
+            statusText.textContent = "Rodada Empatada!";
+            playSoundDraw();
+            
+            // E1.4 Em caso de MD3, empate não incrementa rodada, apenas repete
+            if (formatSelect === 'bo3' && currentRound <= 3 && winsX < 2 && winsO < 2) {
+                setTimeout(startNewRound, 2000);
+            }
+        }
+
+        function processRoundEnd() {
+            // A1.7 Regras MD3
+            if (formatSelect === 'bo3') {
+                if (winsX === 2 || winsO === 2) {
+                    const campeao = winsX === 2 ? 'X' : (modeSelect === 'cpu' ? 'Computador' : 'O');
+                    statusText.textContent = `FIM DE JOGO! Campeão: ${campeao}!`;
+                } else if (currentRound < 3) {
+                    currentRound++;
+                    setTimeout(startNewRound, 2000); // Aguarda 2s e limpa tabuleiro
+                }
+            }
+            // A1.8 Partida Única (Game Over, aguarda reinício manual)
+        }
+
+        // RF-06 / UI-10: Cálculo da Linha de Vitória Visual
+        function drawWinLine(condition) {
+            // Índices:
+            // 0 1 2
+            // 3 4 5
+            // 6 7 8
+            winLine.style.opacity = 1;
+            
+            // Padrões Mapeados (Top, Left, Width, Angle) em Porcentagem
+            const lines = {
+                '0,1,2': { t: '16.6%', l: '5%', w: '90%', deg: '0deg' },
+                '3,4,5': { t: '50%', l: '5%', w: '90%', deg: '0deg' },
+                '6,7,8': { t: '83.3%', l: '5%', w: '90%', deg: '0deg' },
+                '0,3,6': { t: '5%', l: '16.6%', w: '90%', deg: '90deg' },
+                '1,4,7': { t: '5%', l: '50%', w: '90%', deg: '90deg' },
+                '2,5,8': { t: '5%', l: '83.3%', w: '90%', deg: '90deg' },
+                '0,4,8': { t: '8.5%', l: '8.5%', w: '118%', deg: '45deg' },
+                '2,4,6': { t: '8.5%', l: '91.5%', w: '118%', deg: '135deg' }
+            };
+
+            const key = condition.join(',');
+            const style = lines[key];
+            
+            winLine.style.top = style.t;
+            winLine.style.left = style.l;
+            winLine.style.width = style.w;
+            winLine.style.height = '10px';
+            winLine.style.transform = `rotate(${style.deg})`;
+            
+            // Ajuste especial da origem de transformação (Top-Left) para diagonais e verticais ficarem centralizadas
+            if (key === '0,4,8' || key === '2,4,6' || style.deg === '90deg') {
+                winLine.style.transformOrigin = 'top left';
+            } else {
+                 winLine.style.transformOrigin = 'center';
+            }
+        }
+
+        // Boot
+        initializeGame();
+    </script>
+</body>
+</html>
