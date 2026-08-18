@@ -5,8 +5,8 @@
 
 ## 💬 Prompts Enviados
 Abaixo estão os principais prompts enviados para a estruturação do projeto:
-1. **Geração do Código:** "Eu preciso criar um jogo da velha par minha cadeira de Requisitos e mod de sistemas, nela eu preciso desenvolver uma atividade Prática: Desenvolvimento Guiado por Requisitos (Spec-Driven Development). Para isso o professor me disponilizou esse caso de uso: [Texto completo do CDU colado]"
-2. **Configuração do GitHub:** "Então, preciso subi-lo para o git hub, dessa mesma forma da imgem, como faço ? Me ensine o passo a passo"
+1. **Geração do Código:** "Eu preciso criar um jogo da velha para minha cadeira de Requisitos e mod de sistemas, nela eu preciso desenvolver uma atividade Prática: Desenvolvimento Guiado por Requisitos (Spec-Driven Development). Para isso o professor me disponilizou o caso de uso presente na pasta docs.md
+2. **Configuração do GitHub:** "Então, preciso subi-lo para o git hub, dessa mesma forma da imagem, como faço ? Me ensine o passo a passo"
 3. **Resolução de Erros de Deploy:** Interações sucessivas para resolver questões de inicialização do Git (`git init`), configuração de identidade do autor (`git config`) e ajuste de *case sensitivity* na pasta `/src/` para o correto funcionamento do GitHub Pages.
 
 ## ⚠️ Erros da IA e Correções
